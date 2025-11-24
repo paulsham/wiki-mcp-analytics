@@ -29,3 +29,6 @@ npm-debug.log*
 # Claude Code (user-specific)
 .mcp.json
 .claude/settings.local.json
+
+# Cloned wiki repository (auto-synced by CI/CD)
+wiki/

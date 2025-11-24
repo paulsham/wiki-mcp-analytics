@@ -22,8 +22,12 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const WIKI_DIR = join(__dirname, '../../wiki-examples');
-const OUTPUT_DIR = join(__dirname, '../../specs/csv');
+// Check for wiki/ (CI/CD) first, fall back to wiki-examples/ (local dev)
+const PROJECT_ROOT = join(__dirname, '../..');
+const WIKI_CLONE_DIR = join(PROJECT_ROOT, 'wiki');
+const WIKI_EXAMPLES_DIR = join(PROJECT_ROOT, 'wiki-examples');
+const WIKI_DIR = existsSync(WIKI_CLONE_DIR) ? WIKI_CLONE_DIR : WIKI_EXAMPLES_DIR;
+const OUTPUT_DIR = join(PROJECT_ROOT, 'specs', 'csv');
 
 /**
  * Parse a markdown table into an array of objects
@@ -187,6 +191,8 @@ function toCSV(rows, columns) {
  * @param {string} outputDir - Directory for CSV output
  */
 export function transformWikiToCSV(wikiDir = WIKI_DIR, outputDir = OUTPUT_DIR) {
+  console.log(`Reading wiki from: ${wikiDir}`);
+
   // Ensure output directory exists
   if (!existsSync(outputDir)) {
     mkdirSync(outputDir, { recursive: true });

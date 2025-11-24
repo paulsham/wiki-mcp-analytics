@@ -1,0 +1,168 @@
+name: Transform Wiki to Specs
+
+on:
+  schedule:
+    # Run once daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+  # Allow manual triggering from GitHub UI
+  workflow_dispatch:
+    inputs:
+      force_transform:
+        description: 'Force transformation even if no wiki changes detected'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  transform:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout main repo
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for tracking
+
+      # Step 2: Clone wiki repository
+      - name: Clone wiki repository
+        run: |
+          echo "📚 Cloning wiki repository..."
+          git clone https://github.com/${{ github.repository }}.wiki.git wiki
+          cd wiki
+          echo "Latest wiki commit: $(git rev-parse HEAD)"
+          cd ..
+
+      # Step 3: Check for wiki changes
+      - name: Check for wiki changes
+        id: check_changes
+        run: |
+          echo "🔍 Checking for wiki changes..."
+
+          # Get the last processed wiki commit hash
+          if [ -f .last_wiki_commit ]; then
+            LAST_COMMIT=$(cat .last_wiki_commit)
+            echo "Last processed wiki commit: $LAST_COMMIT"
+          else
+            LAST_COMMIT=""
+            echo "No previous wiki commit found (first run)"
+          fi
+
+          # Get current wiki commit hash
+          cd wiki
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          cd ..
+
+          echo "Current wiki commit: $CURRENT_COMMIT"
+
+          # Check if there are new commits or force flag is set
+          FORCE="${{ inputs.force_transform }}"
+
+          if [ "$FORCE" = "true" ]; then
+            echo "⚡ Force transformation requested"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "current_commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+            echo "reason=forced" >> $GITHUB_OUTPUT
+          elif [ "$LAST_COMMIT" != "$CURRENT_COMMIT" ]; then
+            echo "✅ Wiki has new commits - will transform"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "current_commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+            echo "reason=new_commits" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️  No wiki changes detected - skipping transformation"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 4: Setup Node.js (only if changes detected)
+      - name: Setup Node.js
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Step 5: Install dependencies (only if changes detected)
+      - name: Install dependencies
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+
+      # Step 6: Run transformation (only if changes detected)
+      - name: Transform wiki to specs
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "🔄 Running transformation pipeline..."
+          npm run transform
+          echo "✅ Transformation complete"
+
+      # Step 7: Check if specs actually changed
+      - name: Check for spec changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        id: check_spec_changes
+        run: |
+          if git diff --quiet specs/; then
+            echo "specs_changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No changes to specs (wiki changed but output is identical)"
+          else
+            echo "specs_changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Specs have changed"
+          fi
+
+      # Step 8: Commit and push changes (only if specs changed)
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true' && steps.check_spec_changes.outputs.specs_changed == 'true'
+        run: |
+          echo "💾 Committing changes..."
+
+          # Save the current wiki commit hash for next run
+          echo "${{ steps.check_changes.outputs.current_commit }}" > .last_wiki_commit
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add changes
+          git add specs/ .last_wiki_commit
+
+          # Create commit message with wiki commit reference
+          WIKI_COMMIT="${{ steps.check_changes.outputs.current_commit }}"
+          SHORT_COMMIT="${WIKI_COMMIT:0:7}"
+
+          if [ "${{ steps.check_changes.outputs.reason }}" = "forced" ]; then
+            COMMIT_MSG="chore: force regenerate specs from wiki ($SHORT_COMMIT)"
+          else
+            COMMIT_MSG="chore: update specs from wiki ($SHORT_COMMIT)"
+          fi
+
+          git commit -m "$COMMIT_MSG" -m "Wiki commit: https://github.com/${{ github.repository }}.wiki/commit/$WIKI_COMMIT"
+
+          # Push changes
+          git push
+
+          echo "✅ Changes pushed to repository"
+
+      # Step 9: Summary
+      - name: Workflow summary
+        if: always()
+        run: |
+          echo "## Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_changes.outputs.has_changes }}" = "true" ]; then
+            echo "✅ **Changes detected and processed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Wiki commit: \`${{ steps.check_changes.outputs.current_commit }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Reason: ${{ steps.check_changes.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+
+            if [ "${{ steps.check_spec_changes.outputs.specs_changed }}" = "true" ]; then
+              echo "- Result: Specs updated and committed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- Result: No spec changes (transformation produced identical output)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ **No changes detected**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Wiki has not been updated since last transformation." >> $GITHUB_STEP_SUMMARY
+          fi
