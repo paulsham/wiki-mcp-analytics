@@ -9,19 +9,19 @@ All property definitions for analytics events. This is the single source of trut
 | user_id | string | regex: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ | Unique identifier for the user. Generated at registration and immutable. | Include in all events where user can be identified. |
 | email | string | regex: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ | User's email address. | Include when email context is relevant. |
 | account_created_at | timestamp | - | Timestamp when the user account was created. | Track account age for cohort analysis. |
-| user_tier | string | enum: free\|basic\|premium\|enterprise | Current subscription tier of the user. | Segment analysis by subscription level. |
-| registration_method | string | enum: email\|google\|facebook\|apple\|github | Method used to register an account. | Track registration source for conversion analysis. |
+| user_tier | string | enum: free, basic, premium, enterprise | Current subscription tier of the user. | Segment analysis by subscription level. |
+| registration_method | string | enum: email, google, facebook, apple, github | Method used to register an account. | Track registration source for conversion analysis. |
 | referral_code | string | regex: ^[A-Z0-9]{6}$ | Six-character alphanumeric referral code. | Track referral program effectiveness. |
-| account_type | string | enum: personal\|team\|enterprise | Type of account created. | Segment users by account type. |
-| verification_method | string | enum: link\|code | How the user verified their email. | Analyze verification preferences. |
+| account_type | string | enum: personal, team, enterprise | Type of account created. | Segment users by account type. |
+| verification_method | string | enum: link, code | How the user verified their email. | Analyze verification preferences. |
 | time_to_verify | number | - | Seconds between registration and email verification. | Measure verification funnel speed. |
 
 ## Event Properties
 
 | Property Name | Type | Constraints | Description | Usage |
 |---------------|------|-------------|-------------|-------|
-| device_type | string | enum: mobile\|tablet\|desktop\|tv\|watch | Type of device being used. | Include in device_info group for platform-specific analysis. |
-| platform | string | enum: web\|ios\|android\|windows\|macos\|linux | Platform or operating system. | Critical for cross-platform analysis. |
+| device_type | string | enum: mobile, tablet, desktop, tv, watch | Type of device being used. | Include in device_info group for platform-specific analysis. |
+| platform | string | enum: web, ios, android, windows, macos, linux | Platform or operating system. | Critical for cross-platform analysis. |
 | os_version | string | - | Operating system version string. | Track OS-specific issues and feature adoption. |
 | app_version | string | regex: ^\d+\.\d+\.\d+$ | Application version in semver format. | Track feature rollout and bug reports by version. |
 | session_id | string | regex: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ | Unique identifier for the user session. | Group events within a single user session. |
@@ -39,8 +39,8 @@ All property definitions for analytics events. This is the single source of trut
 | completed_steps | number | - | Number of steps the user completed. | Track partial completions. |
 | project_id | string | regex: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ | Unique identifier for the project. | Track project-level analytics and cross-reference events. |
 | project_name | string | - | Name of the project. | Human-readable project identification. |
-| project_template | string | enum: blank\|starter\|advanced\|import | Template used to create the project. | Analyze template popularity and user preferences. |
+| project_template | string | enum: blank, starter, advanced, import | Template used to create the project. | Analyze template popularity and user preferences. |
 | invitee_email | string | regex: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ | Email address of the invited collaborator. | Track invitation patterns and collaboration growth. |
-| permission_level | string | enum: viewer\|editor\|admin | Permission level granted to the collaborator. | Analyze permission distribution and security patterns. |
+| permission_level | string | enum: viewer, editor, admin | Permission level granted to the collaborator. | Analyze permission distribution and security patterns. |
 | file_type | string | - | MIME type or extension of the uploaded file. | Track file type distribution for storage optimization. |
 | file_size_bytes | number | - | Size of the uploaded file in bytes. | Monitor storage usage and identify large uploads. |
