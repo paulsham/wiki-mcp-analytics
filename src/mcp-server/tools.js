@@ -90,6 +90,9 @@ export const tools = {
           continue;
         }
 
+        // Remove from expected (field was provided, even if invalid)
+        expectedProps.delete(key);
+
         // Type validation
         const actualType = Array.isArray(value) ? 'array' : typeof value;
         const expectedType = prop.type === 'timestamp' ? 'string' : prop.type;
@@ -137,7 +140,6 @@ export const tools = {
         }
 
         validFields.push(key);
-        expectedProps.delete(key);
       }
 
       // Check for missing properties
