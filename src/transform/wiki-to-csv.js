@@ -17,13 +17,13 @@ import {
   PROPERTIES_COLUMNS,
   PROPERTY_GROUPS_COLUMNS,
   EVENTS_COLUMNS
-} from './constants.js';
+} from '../constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const WIKI_DIR = join(__dirname, '../../wiki-examples');
-const OUTPUT_DIR = join(__dirname, '../../specs/json');
+const OUTPUT_DIR = join(__dirname, '../../specs/csv');
 
 /**
  * Parse a markdown table into an array of objects

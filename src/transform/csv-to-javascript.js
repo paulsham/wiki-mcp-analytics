@@ -15,12 +15,12 @@ import {
   PROPERTIES_DIR,
   PROPERTY_GROUPS_DIR,
   EVENTS_DIR
-} from './constants.js';
+} from '../constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const INPUT_DIR = join(__dirname, '../../specs/json');
+const INPUT_DIR = join(__dirname, '../../specs/csv');
 const OUTPUT_DIR = join(__dirname, '../../specs/javascript');
 
 /**

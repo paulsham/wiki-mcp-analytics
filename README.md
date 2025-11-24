@@ -55,14 +55,22 @@ npm run transform:js    # CSV → JavaScript only
 npm start
 ```
 
-### Configure with Claude Desktop
+### Configure with AI Coding Tools
 
-Add to your Claude Desktop configuration (`claude_desktop_config.json`):
+#### Claude Code
+
+```bash
+claude mcp add wiki-analytics node /path/to/wiki-mcp-analytics/src/mcp-server/index.js
+```
+
+#### Other MCP-compatible tools
+
+Add to your MCP configuration file:
 
 ```json
 {
   "mcpServers": {
-    "analytics": {
+    "wiki-analytics": {
       "command": "node",
       "args": ["/path/to/wiki-mcp-analytics/src/mcp-server/index.js"]
     }
@@ -109,7 +117,7 @@ wiki-mcp-analytics/
 │   └── mcp-server/          # MCP server implementation
 │       └── index.js
 ├── specs/
-│   ├── json/                # CSV output for MCP tools
+│   ├── csv/                 # CSV output for MCP tools
 │   │   ├── properties.csv
 │   │   ├── property-groups.csv
 │   │   └── events.csv
@@ -196,7 +204,7 @@ Claude Desktop / Claude Code
 ```bash
 # Verify transformation output
 npm run transform
-ls -la specs/json/
+ls -la specs/csv/
 ls -la specs/javascript/
 ```
 

@@ -1,0 +1,15 @@
+group_name,description,properties
+user_context,Common user identification properties used across most events,"user_id
+email
+account_created_at
+user_tier"
+device_info,Information about the device and platform,"device_type
+platform
+os_version
+app_version"
+session_context,Session-level tracking information,"session_id
+session_start_time
+session_count"
+page_context,Information about the current page,"page_url
+page_title
+referrer"
