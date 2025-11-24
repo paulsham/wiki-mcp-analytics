@@ -31,3 +31,7 @@ file_uploaded,User uploaded a file to a project,Project Events,"user_context
 session_context","project_id
 file_type
 file_size_bytes",Fire after successful upload. Monitor file type distribution and storage usage.
+project_favorited,User favorites a project,Project Events,"user_context
+session_context","project_id
+project_name
+project_template",Fire after project is favorited.
