@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      HUSKY: 0  # Disable Husky hooks in CI (bot is allowed to commit specs)
 
     steps:
       # Step 1: Checkout main repo
