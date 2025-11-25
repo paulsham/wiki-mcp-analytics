@@ -39,3 +39,7 @@ project_favorited,User favorites a project,Project Events,"user_context
 session_context","project_id
 project_name
 project_template",Fire after project is favorited.
+project_duplicated,User duplicates a project,Project Events,"user_context
+session_context","project_id
+project_name
+project_template",Fire after project is duplicated.
