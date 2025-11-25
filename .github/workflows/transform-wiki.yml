@@ -119,15 +119,12 @@ jobs:
         run: |
           echo "💾 Committing changes..."
 
-          # Save the current wiki commit hash for next run
-          echo "${{ steps.check_changes.outputs.current_commit }}" > .last_wiki_commit
-
           # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add changes
-          git add specs/ .last_wiki_commit
+          # Add specs changes only
+          git add specs/
 
           # Create commit message with wiki commit reference
           WIKI_COMMIT="${{ steps.check_changes.outputs.current_commit }}"
@@ -154,14 +151,20 @@ jobs:
             COMMIT_MSG="chore(specs): Multiple wiki updates ($COMMIT_COUNT commits) [skip ci]"
           fi
 
-          # Commit with subject and body
+          # Commit specs with subject and body
           git commit -m "$COMMIT_MSG" \
             -m "Automatically synced from wiki." \
             -m "Recent wiki changes:" \
             -m "$COMMIT_LIST" \
             -m "Wiki commit: $WIKI_COMMIT"
 
-          # Push changes
+          # Push specs commit
+          git push
+
+          # ONLY after successful push, update the tracking file
+          echo "$WIKI_COMMIT" > .last_wiki_commit
+          git add .last_wiki_commit
+          git commit -m "chore: update wiki sync marker [skip ci]"
           git push
 
           echo "✅ Changes pushed to repository"
