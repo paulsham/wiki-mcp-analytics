@@ -1,9 +1,10 @@
 name: Transform Wiki to Specs
 
 on:
-  schedule:
-    # Run once daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  # Automated daily sync (optional - uncomment to enable)
+  # schedule:
+  #   # Run once daily at 2 AM UTC
+  #   - cron: '0 2 * * *'
 
   # Allow manual triggering from GitHub UI
   workflow_dispatch:
@@ -92,12 +93,12 @@ jobs:
           npm ci
 
       # Step 6: Run transformation (only if changes detected)
-      - name: Transform wiki to specs
+      - name: Build specs from wiki
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          echo "🔄 Running transformation pipeline..."
-          npm run transform
-          echo "✅ Transformation complete"
+          echo "🔄 Building specs from wiki..."
+          npm run build
+          echo "✅ Build complete"
 
       # Step 7: Check if specs actually changed
       - name: Check for spec changes
@@ -130,15 +131,38 @@ jobs:
 
           # Create commit message with wiki commit reference
           WIKI_COMMIT="${{ steps.check_changes.outputs.current_commit }}"
-          SHORT_COMMIT="${WIKI_COMMIT:0:7}"
+          LAST_COMMIT=$(cat .last_wiki_commit 2>/dev/null || echo "")
 
-          if [ "${{ steps.check_changes.outputs.reason }}" = "forced" ]; then
-            COMMIT_MSG="chore: force regenerate specs from wiki ($SHORT_COMMIT)"
+          # Get wiki commit messages since last sync
+          cd wiki
+          if [ -n "$LAST_COMMIT" ]; then
+            COMMIT_COUNT=$(git rev-list --count $LAST_COMMIT..$WIKI_COMMIT)
+            COMMIT_LIST=$(git log --format="- %h: %s" $LAST_COMMIT..$WIKI_COMMIT)
           else
-            COMMIT_MSG="chore: update specs from wiki ($SHORT_COMMIT)"
+            COMMIT_COUNT=1
+            COMMIT_LIST=$(git log --format="- %h: %s" -1 $WIKI_COMMIT)
+          fi
+          cd ..
+
+          # Build commit message
+          if [ "${{ steps.check_changes.outputs.reason }}" = "forced" ]; then
+            COMMIT_MSG="chore(specs): Regenerate from wiki [skip ci]"
+          elif [ "$COMMIT_COUNT" -eq 1 ]; then
+            WIKI_MSG=$(cd wiki && git log --format="%s" -1 $WIKI_COMMIT)
+            COMMIT_MSG="chore(specs): $WIKI_MSG [skip ci]"
+          else
+            COMMIT_MSG="chore(specs): Multiple wiki updates ($COMMIT_COUNT commits) [skip ci]"
           fi
 
-          git commit -m "$COMMIT_MSG" -m "Wiki commit: https://github.com/${{ github.repository }}.wiki/commit/$WIKI_COMMIT"
+          # Build commit body
+          COMMIT_BODY="Automatically synced from wiki.
+
+Recent wiki changes:
+$COMMIT_LIST
+
+Wiki commit: $WIKI_COMMIT"
+
+          git commit -m "$COMMIT_MSG" -m "$COMMIT_BODY"
 
           # Push changes
           git push

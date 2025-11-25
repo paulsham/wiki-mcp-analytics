@@ -39,6 +39,9 @@ const packageJson = JSON.parse(
   readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf-8')
 );
 
+// Store outdated warning for appending to tool responses
+let outdatedWarning = null;
+
 /**
  * Create and configure the MCP server
  */
@@ -82,11 +85,18 @@ function registerTools(server) {
     }
 
     const result = await tool.handler(args || {});
+
+    // Prepend outdated warning if present
+    let responseText = JSON.stringify(result, null, 2);
+    if (outdatedWarning) {
+      responseText = `⚠️  Warning: ${outdatedWarning}\n\n${responseText}`;
+    }
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(result, null, 2)
+          text: responseText
         }
       ]
     };
@@ -224,8 +234,8 @@ async function main() {
   // Load data
   loadData(SPECS_DIR);
 
-  // Check if repo is outdated
-  warnIfOutdated(PROJECT_ROOT);
+  // Check if repo is outdated and store warning
+  outdatedWarning = warnIfOutdated(PROJECT_ROOT);
 
   // Create and configure server
   const server = createServer();
@@ -237,6 +247,16 @@ async function main() {
   await server.connect(transport);
 
   console.error('Wiki Analytics MCP Server running on stdio');
+
+  // Log warning to both stderr and MCP if repo is outdated
+  if (outdatedWarning) {
+    console.error(`Warning: ${outdatedWarning}`);
+    await server.sendLoggingMessage({
+      level: 'warning',
+      logger: 'git-sync',
+      data: outdatedWarning
+    });
+  }
 }
 
 main().catch((error) => {

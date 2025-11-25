@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+
+# Husky pre-commit hook
+# Prevents manual commits to specs/ directory
+
+# Check if specs/ files are being committed
+if git diff --cached --name-only | grep -E "^specs/"; then
+  echo ""
+  echo "❌ ERROR: Cannot manually commit generated specs in 'specs/'"
+  echo ""
+  echo "The specs/ directory is auto-generated and committed only by CI/CD."
+  echo "Manual commits to specs/ are not allowed to prevent stale data."
+  echo ""
+  echo "To unstage these files, run:"
+  echo "  git restore --staged specs/"
+  echo ""
+  echo "To update specs, push changes to your wiki repository."
+  echo "The GitHub Action will automatically generate and commit updated specs."
+  echo ""
+  exit 1
+fi

@@ -53,8 +53,9 @@ export function loadData(specsDir) {
 }
 
 /**
- * Check if git repo is behind remote and warn user
+ * Check if git repo is behind remote and return warning message if outdated
  * @param {string} projectRoot - Path to project root
+ * @returns {string|null} Warning message if outdated, null otherwise
  */
 export function warnIfOutdated(projectRoot) {
   try {
@@ -67,11 +68,12 @@ export function warnIfOutdated(projectRoot) {
     if (status.includes('behind')) {
       const match = status.match(/behind .+ by (\d+) commit/);
       const commits = match ? match[1] : 'some';
-      console.error(`Warning: Local repo is ${commits} commit(s) behind remote. Run 'git pull' to update specs.`);
+      return `Local repo is ${commits} commit(s) behind remote. Run 'git pull' to update specs.`;
     }
   } catch (error) {
     // Silently ignore git errors (not a git repo, no remote, etc.)
   }
+  return null;
 }
 
 /**

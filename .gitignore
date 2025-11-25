@@ -1,10 +1,6 @@
 # Dependencies
 node_modules/
 
-# Output directories (generated files)
-specs/csv/
-specs/javascript/
-
 # Runtime workspace
 workspace/
 
