@@ -105,12 +105,17 @@ jobs:
         if: steps.check_changes.outputs.has_changes == 'true'
         id: check_spec_changes
         run: |
-          if git diff --quiet specs/; then
+          # Check for both modified tracked files and new untracked files
+          CHANGES=$(git status --porcelain specs/)
+
+          if [ -z "$CHANGES" ]; then
             echo "specs_changed=false" >> $GITHUB_OUTPUT
             echo "ℹ️  No changes to specs (wiki changed but output is identical)"
           else
             echo "specs_changed=true" >> $GITHUB_OUTPUT
             echo "✅ Specs have changed"
+            echo "Changes detected:"
+            echo "$CHANGES"
           fi
 
       # Step 8: Commit and push changes (only if specs changed)
