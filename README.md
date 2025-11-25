@@ -24,7 +24,45 @@ This project enables a Wiki-based workflow for managing analytics specifications
 
 ## Installation
 
-### Quick Start (Using as-is)
+> **Note:** This project is currently optimized for GitHub (template repositories, GitHub Actions, GitHub wikis). The concepts translate to other platforms like GitLab, but implementation details differ.
+
+### Use as Template (Recommended)
+
+This project is designed as a template for your own analytics specifications.
+
+**On GitHub:**
+
+1. Click **"Use this template"** → **"Create a new repository"** on GitHub
+2. Clone your new repository locally and install dependencies:
+   ```bash
+   git clone https://github.com/yourusername/your-repo-name.git
+   cd your-repo-name
+   npm install  # Automatically sets up git hooks
+   ```
+3. Set up your wiki with example content:
+   - Go to your repository's Wiki tab on GitHub
+   - Create pages: `Events.md`, `Property-Groups.md`, `Properties.md`
+   - Copy content from this project's `wiki-examples/` directory
+4. Trigger the build workflow:
+   - Go to **Actions** tab → **"Transform Wiki to Specs"** → **"Run workflow"**
+5. Pull the generated specs:
+   ```bash
+   git pull
+   ```
+6. Configure with your AI tool (see "Configure with AI Coding Tools" below)
+
+**Optional enhancements:**
+- Enable automated sync by uncommenting the cron job in `.github/workflows/transform-wiki.yml`
+- Add GitHub branch protection rules for additional server-side protection (Husky hooks already block local commits)
+
+**Requirements:**
+- Node.js 20+
+- Git
+- GitHub account (for template and CI/CD workflow)
+
+### Quick Test (Using Example Data)
+
+To test the MCP server without setting up a wiki:
 
 ```bash
 # Clone the repository
@@ -34,28 +72,14 @@ cd wiki-mcp-analytics
 # Install dependencies
 npm install
 
+# Build from example data
+npm run build:example
+
 # Start the MCP server
 npm start
 ```
 
-### Fork & Customize (Recommended)
-
-This project is designed as a template for your own analytics specifications:
-
-1. **Fork this repository** to your account
-2. **Set up your wiki** - Copy content from the example wiki to your fork's wiki
-3. **Install dependencies** - Run `npm install` (automatically sets up git hooks)
-4. **Trigger the workflow** - Go to Actions tab, manually run "Transform Wiki to Specs"
-5. **Pull the generated specs** - Run `git pull` to get CI-generated specs
-6. **Configure MCP** - Add to your AI tool's MCP configuration (see below)
-
-**Optional:** Enable automated sync by uncommenting the cron job in `.github/workflows/transform-wiki.yml`
-
-**Optional:** Add branch protection rules to restrict `specs/` commits to CI/CD only
-
-**Requirements:**
-- Node.js 20+
-- Git
+This uses the `wiki-examples/` directory to generate test specs.
 
 ## Usage
 
