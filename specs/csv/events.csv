@@ -1,0 +1,41 @@
+event_name,event_description,event_table,property_groups,additional_properties,notes
+user_registration_started,User began the registration process,Registration Events,"device_info
+page_context",registration_method,Fire when registration form is displayed. Track abandonment by comparing with completion.
+user_registration_completed,User completed the registration process,Registration Events,"user_context
+device_info","registration_method
+referral_code
+account_type",Fire immediately after successful registration. Ensure registration_method matches OAuth provider.
+email_verified,User verified their email address,Registration Events,user_context,"verification_method
+time_to_verify",Track time between registration and verification for funnel analysis.
+onboarding_started,User began the onboarding process,Onboarding Events,"user_context
+session_context","onboarding_version
+total_steps",Fire when first onboarding screen is shown.
+onboarding_step_completed,User completed an onboarding step,Onboarding Events,"user_context
+session_context","step_name
+step_number
+completion_time
+skipped",Fire after each step. Include skipped=true if user skipped the step.
+onboarding_completed,User finished the entire onboarding flow,Onboarding Events,"user_context
+session_context","onboarding_version
+total_steps
+completed_steps",Fire when user completes or exits onboarding. Calculate completion rate from completed_steps/total_steps.
+project_created,User created a new project,Project Events,"user_context
+session_context","project_id
+project_name
+project_template",Fire after project is successfully created. Track template usage for product decisions.
+project_deleted,User deleted an existing project,Project Events,"user_context
+session_context","project_id
+project_name
+project_template",Fire after project deletion is complete.
+collaborator_invited,User invited a collaborator to a project,Project Events,"user_context
+session_context","project_id
+invitee_email
+permission_level",Fire when invitation is sent. Track collaboration adoption and permission patterns.
+file_uploaded,User uploaded a file to a project,Project Events,"user_context
+session_context","project_id
+file_type
+file_size_bytes",Fire after successful upload. Monitor file type distribution and storage usage.
+project_favorited,User favorites a project,Project Events,"user_context
+session_context","project_id
+project_name
+project_template",Fire after project is favorited.
