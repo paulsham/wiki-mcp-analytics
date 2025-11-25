@@ -154,15 +154,12 @@ jobs:
             COMMIT_MSG="chore(specs): Multiple wiki updates ($COMMIT_COUNT commits) [skip ci]"
           fi
 
-          # Build commit body
-          COMMIT_BODY="Automatically synced from wiki.
-
-Recent wiki changes:
-$COMMIT_LIST
-
-Wiki commit: $WIKI_COMMIT"
-
-          git commit -m "$COMMIT_MSG" -m "$COMMIT_BODY"
+          # Commit with subject and body
+          git commit -m "$COMMIT_MSG" \
+            -m "Automatically synced from wiki." \
+            -m "Recent wiki changes:" \
+            -m "$COMMIT_LIST" \
+            -m "Wiki commit: $WIKI_COMMIT"
 
           # Push changes
           git push
