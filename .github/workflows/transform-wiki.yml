@@ -34,7 +34,7 @@ jobs:
       - name: Clone wiki repository
         run: |
           echo "📚 Cloning wiki repository..."
-          git clone https://github.com/${{ github.repository }}.wiki.git wiki
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git wiki
           cd wiki
           echo "Latest wiki commit: $(git rev-parse HEAD)"
           cd ..
