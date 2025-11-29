@@ -24,7 +24,9 @@ This project enables a Wiki-based workflow for managing analytics specifications
 
 ## Installation
 
-> **Note:** This project is currently optimized for GitHub (template repositories, GitHub Actions, GitHub wikis). The concepts translate to other platforms like GitLab, but implementation details differ.
+> **Note:**
+> - This project is currently optimized for GitHub (template repositories, GitHub Actions, GitHub wikis). The concepts translate to other platforms like GitLab, but implementation details differ.
+> - In Github, adding a wiki to a private repo requires a paid plan.
 
 ### Use as Template (Recommended)
 
