@@ -1,0 +1,151 @@
+# Wiki to Specs Transformation Pipeline
+#
+# This pipeline transforms wiki markdown into analytics specs.
+# It mirrors the GitHub Actions workflow for GitLab users.
+
+stages:
+  - transform
+
+variables:
+  # Disable Husky hooks in CI (bot is allowed to commit specs)
+  HUSKY: "0"
+
+transform-wiki:
+  stage: transform
+  image: node:20
+  rules:
+    # Manual trigger from GitLab UI
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # Scheduled runs (set up a schedule in GitLab CI/CD > Schedules)
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  before_script:
+    # Install git (not included in node image)
+    - apt-get update && apt-get install -y git
+  script:
+    - |
+      # Step 1: Clone wiki repository
+      echo "📚 Cloning wiki repository..."
+      git clone --depth=50 https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git wiki
+      cd wiki
+      WIKI_COMMIT=$(git rev-parse HEAD)
+      echo "Latest wiki commit: $WIKI_COMMIT"
+      cd ..
+
+      # Step 2: Check for wiki changes
+      echo "🔍 Checking for wiki changes..."
+      if [ -f .last_wiki_commit ]; then
+        LAST_COMMIT=$(cat .last_wiki_commit)
+        echo "Last processed wiki commit: $LAST_COMMIT"
+      else
+        LAST_COMMIT=""
+        echo "No previous wiki commit found (first run)"
+      fi
+      echo "Current wiki commit: $WIKI_COMMIT"
+
+      # Step 3: Determine if transformation is needed
+      FORCE="${FORCE_TRANSFORM:-false}"
+      if [ "$FORCE" = "true" ]; then
+        echo "⚡ Force transformation requested"
+        HAS_CHANGES=true
+        REASON="forced"
+      elif [ "$LAST_COMMIT" != "$WIKI_COMMIT" ]; then
+        echo "✅ Wiki has new commits - will transform"
+        HAS_CHANGES=true
+        REASON="new_commits"
+      else
+        echo "⏭️  No wiki changes detected - skipping transformation"
+        HAS_CHANGES=false
+      fi
+
+      # Step 4: Install dependencies and build (if changes detected)
+      if [ "$HAS_CHANGES" = "true" ]; then
+        echo "📦 Installing dependencies..."
+        npm ci
+
+        echo "🔄 Building specs from wiki..."
+        npm run build
+        echo "✅ Build complete"
+
+        # Check if specs actually changed
+        CHANGES=$(git status --porcelain specs/)
+        if [ -z "$CHANGES" ]; then
+          echo "ℹ️  No changes to specs (wiki changed but output is identical)"
+          SPECS_CHANGED=false
+        else
+          echo "✅ Specs have changed"
+          echo "Changes detected:"
+          echo "$CHANGES"
+          SPECS_CHANGED=true
+        fi
+
+        # Commit and push if specs changed
+        if [ "$SPECS_CHANGED" = "true" ]; then
+          echo "💾 Committing changes..."
+
+          # Configure git
+          git config user.name "GitLab CI"
+          git config user.email "gitlab-ci@${CI_SERVER_HOST}"
+
+          # Add specs changes
+          git add specs/
+
+          # Get wiki commit messages since last sync
+          cd wiki
+          if [ -n "$LAST_COMMIT" ]; then
+            COMMIT_COUNT=$(git rev-list --count $LAST_COMMIT..$WIKI_COMMIT 2>/dev/null || echo "1")
+            COMMIT_LIST=$(git log --format="- %h: %s" $LAST_COMMIT..$WIKI_COMMIT 2>/dev/null || git log --format="- %h: %s" -1 $WIKI_COMMIT)
+          else
+            COMMIT_COUNT=1
+            COMMIT_LIST=$(git log --format="- %h: %s" -1 $WIKI_COMMIT)
+          fi
+          cd ..
+
+          # Build commit message
+          if [ "$REASON" = "forced" ]; then
+            COMMIT_MSG="chore(specs): Regenerate from wiki [skip ci]"
+          elif [ "$COMMIT_COUNT" -eq 1 ]; then
+            WIKI_MSG=$(cd wiki && git log --format="%s" -1 $WIKI_COMMIT)
+            COMMIT_MSG="chore(specs): $WIKI_MSG [skip ci]"
+          else
+            COMMIT_MSG="chore(specs): Multiple wiki updates ($COMMIT_COUNT commits) [skip ci]"
+          fi
+
+          # Commit specs
+          git commit -m "$COMMIT_MSG" \
+            -m "Automatically synced from wiki." \
+            -m "Recent wiki changes:" \
+            -m "$COMMIT_LIST" \
+            -m "Wiki commit: $WIKI_COMMIT"
+
+          # Push specs commit
+          git push https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git HEAD:${CI_COMMIT_REF_NAME}
+
+          # ONLY after successful push, update the tracking file
+          echo "$WIKI_COMMIT" > .last_wiki_commit
+          git add .last_wiki_commit
+          git commit -m "chore: update wiki sync marker [skip ci]"
+          git push https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git HEAD:${CI_COMMIT_REF_NAME}
+
+          echo "✅ Changes pushed to repository"
+        fi
+      fi
+
+      # Step 5: Summary
+      echo ""
+      echo "========================================="
+      echo "           WORKFLOW SUMMARY"
+      echo "========================================="
+      if [ "$HAS_CHANGES" = "true" ]; then
+        echo "✅ Changes detected and processed"
+        echo "   Wiki commit: $WIKI_COMMIT"
+        echo "   Reason: $REASON"
+        if [ "$SPECS_CHANGED" = "true" ]; then
+          echo "   Result: Specs updated and committed"
+        else
+          echo "   Result: No spec changes (transformation produced identical output)"
+        fi
+      else
+        echo "ℹ️  No changes detected"
+        echo "   Wiki has not been updated since last transformation."
+      fi
+      echo "========================================="

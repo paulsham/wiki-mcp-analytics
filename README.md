@@ -24,15 +24,14 @@ This project enables a Wiki-based workflow for managing analytics specifications
 
 ## Installation
 
-> **Note:**
-> - This project is currently optimized for GitHub (template repositories, GitHub Actions, GitHub wikis). The concepts translate to other platforms like GitLab, but implementation details differ.
-> - In Github, adding a wiki to a private repo requires a paid plan.
+> **Note:** GitHub private repo wikis require a paid plan. GitLab private repos include wikis on the free tier (limited to 5 users).
 
 ### Use as Template (Recommended)
 
 This project is designed as a template for your own analytics specifications.
 
-**On GitHub:**
+<details>
+<summary><strong>GitHub Setup</strong></summary>
 
 1. Click **"Use this template"** → **"Create a new repository"** on GitHub
 2. Clone your new repository locally and install dependencies:
@@ -55,12 +54,42 @@ This project is designed as a template for your own analytics specifications.
 
 **Optional enhancements:**
 - Enable automated sync by uncommenting the cron job in `.github/workflows/transform-wiki.yml`
-- Add GitHub branch protection rules for additional server-side protection (Husky hooks already block local commits)
+- Add branch protection rules for additional server-side protection (Husky hooks already block local commits)
+
+</details>
+
+<details>
+<summary><strong>GitLab Setup</strong></summary>
+
+1. Fork or import this repository to GitLab
+2. Clone your new repository locally and install dependencies:
+   ```bash
+   git clone https://gitlab.com/yourusername/your-repo-name.git
+   cd your-repo-name
+   npm install  # Automatically sets up git hooks
+   ```
+3. Set up your wiki with example content:
+   - Go to your project's Wiki in GitLab
+   - Create pages: `Events`, `Property-Groups`, `Properties`
+   - Copy content from this project's `wiki-examples/` directory
+4. Trigger the build pipeline:
+   - Go to **Build** → **Pipelines** → **Run pipeline**
+5. Pull the generated specs:
+   ```bash
+   git pull
+   ```
+6. Configure with your AI tool (see "Configure with AI Coding Tools" below)
+
+**Optional enhancements:**
+- Enable automated sync by uncommenting the scheduled job in `.gitlab-ci.yml`
+- Add protected branch rules for additional server-side protection (Husky hooks already block local commits)
+
+</details>
 
 **Requirements:**
 - Node.js 20+
 - Git
-- GitHub account (for template and CI/CD workflow)
+- GitHub or GitLab account (for CI/CD workflow)
 
 ### Quick Test (Using Example Data)
 
