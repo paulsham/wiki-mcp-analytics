@@ -72,13 +72,17 @@ This project is designed as a template for your own analytics specifications.
    - Go to your project's Wiki in GitLab
    - Create pages: `Events`, `Property-Groups`, `Properties`
    - Copy content from this project's `wiki-examples/` directory
-4. Trigger the build pipeline:
+4. Enable CI push permissions:
+   - Go to **Settings** → **CI/CD** → **Job token permissions**
+   - Under **"Additional permissions"**, enable **"Allow Git push requests to the repository"**
+   - Click **Save changes**
+5. Trigger the build pipeline:
    - Go to **Build** → **Pipelines** → **Run pipeline**
-5. Pull the generated specs:
+6. Pull the generated specs:
    ```bash
    git pull
    ```
-6. Configure with your AI tool (see "Configure with AI Coding Tools" below)
+7. Configure with your AI tool (see "Configure with AI Coding Tools" below)
 
 **Optional enhancements:**
 - Enable automated sync by uncommenting the scheduled job in `.gitlab-ci.yml`
