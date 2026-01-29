@@ -8,7 +8,7 @@ Analytics specs often live in scattered documentation that's hard for developers
 
 This project enables a Wiki-based workflow for managing analytics specifications:
 
-1. **Author in Wiki** - Define events, properties, and property groups using markdown tables
+1. **Author in Wiki** - Define events, properties, property groups, and user properties using markdown tables
 2. **Build automatically** - Convert Wiki markdown → CSV → JavaScript modules
 3. **Query with Claude** - MCP server provides tools for Claude to search and validate specs
 
@@ -42,7 +42,7 @@ This project is designed as a template for your own analytics specifications.
    ```
 3. Set up your wiki with example content:
    - Go to your repository's Wiki tab on GitHub
-   - Create pages: `Events.md`, `Property-Groups.md`, `Properties.md`
+   - Create pages: `Events.md`, `Property-Groups.md`, `Properties.md`, `User-Properties.md`
    - Copy content from this project's `wiki-examples/` directory
 4. Trigger the build workflow:
    - Go to **Actions** tab → **"Transform Wiki to Specs"** → **"Run workflow"**
@@ -70,7 +70,7 @@ This project is designed as a template for your own analytics specifications.
    ```
 3. Set up your wiki with example content:
    - Go to your project's Wiki in GitLab
-   - Create pages: `Events`, `Property-Groups`, `Properties`
+   - Create pages: `Events`, `Property-Groups`, `Properties`, `User-Properties`
    - Copy content from this project's `wiki-examples/` directory
 4. Enable CI push permissions:
    - Go to **Settings** → **CI/CD** → **Job token permissions**
@@ -163,7 +163,7 @@ Add to your MCP configuration file:
 
 ## Wiki Format
 
-The Wiki uses three markdown pages with tables where each row represents one item.
+The Wiki uses markdown pages with tables where each row represents one item.
 
 ### Events.md
 
@@ -183,9 +183,22 @@ The Wiki uses three markdown pages with tables where each row represents one ite
 |---------------|------|-------------|-------------|-------|
 | user_id | string | regex: ^[0-9a-f-]{36}$ | Unique user identifier | Include in all authenticated events |
 
+### User-Properties.md
+
+User properties are custom properties set on user profiles via `identify()` or `setUserProperties()`. They persist across sessions and are used for segmentation (similar to PostHog person properties or Amplitude user properties).
+
+| Property Name | Type | Constraints | Set Once | Description |
+|---------------|------|-------------|----------|-------------|
+| plan | string | enum: free, pro, enterprise | no | Current subscription tier. Segmentation by plan. |
+| signup_source | string | enum: organic, referral, paid | yes | How user discovered the product. Attribution analysis. |
+
+- **Set Once: yes** - Property should only be set once (use `set_once` operation)
+- **Set Once: no** - Property can be updated (use `set` operation)
+
 **Key conventions:**
 - Use `<br>` for line breaks in multi-value cells
-- All properties must be defined in Properties.md
+- Event properties must be defined in Properties.md
+- User properties are defined separately in User-Properties.md
 - Events and property groups reference properties by name only
 
 ## Project Structure
@@ -211,7 +224,8 @@ wiki-mcp-analytics/
 ├── wiki-examples/           # Example wiki content for testing
 │   ├── Events.md
 │   ├── Property-Groups.md
-│   └── Properties.md
+│   ├── Properties.md
+│   └── User-Properties.md
 └── package.json
 ```
 
@@ -262,6 +276,33 @@ Find events in the same flow/table.
 ```javascript
 // Returns related events for funnel analysis
 get_related_events("user_registered")
+```
+
+### get_user_property_details
+
+Get user property definition.
+
+```javascript
+// Returns type, constraints, set_once behavior, and description
+get_user_property_details("plan")
+```
+
+### search_user_properties
+
+Find user properties by criteria.
+
+```javascript
+// Search by name/description, optionally filter to set_once only
+search_user_properties({ query: "activation", set_once: true })
+```
+
+### validate_user_properties
+
+Validate user properties payload and check operation matches set_once behavior.
+
+```javascript
+// Returns errors, warnings (including operation mismatches), and valid fields
+validate_user_properties({ operation: "set", payload: { plan: "pro", signup_source: "referral" } })
 ```
 
 ## Architecture
