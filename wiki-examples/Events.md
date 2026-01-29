@@ -7,7 +7,7 @@ Analytics events organized by category.
 | Event Name | Event Description | Property Groups | Additional Properties | Notes |
 |------------|-------------------|-----------------|----------------------|-------|
 | user_registration_started | User began the registration process | device_info<br>page_context | registration_method | Fire when registration form is displayed. Track abandonment by comparing with completion. |
-| user_registration_completed | User completed the registration process | user_context<br>device_info | registration_method<br>referral_code<br>account_type | Fire immediately after successful registration. Ensure registration_method matches OAuth provider. |
+| user_registration_completed | User completed the registration process | user_context<br>device_info | registration_method<br>referral_code_used | Fire immediately after successful registration. Ensure registration_method matches OAuth provider. |
 | email_verified | User verified their email address | user_context | verification_method<br>time_to_verify | Track time between registration and verification for funnel analysis. |
 
 ## Onboarding Events

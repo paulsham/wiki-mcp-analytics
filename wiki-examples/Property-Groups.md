@@ -6,7 +6,7 @@ Reusable sets of properties that can be included in multiple events.
 
 | Group Name | Description | Properties |
 |------------|-------------|------------|
-| user_context | Common user identification properties used across most events | user_id<br>email<br>account_created_at<br>user_tier |
+| user_context | Common user identification properties for self-contained events (references User-Properties.md) | user_id<br>email<br>account_type<br>plan |
 
 ## Event Property Groups
 

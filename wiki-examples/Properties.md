@@ -1,22 +1,10 @@
 # Properties
 
-All property definitions for analytics events. This is the single source of truth - property groups and events reference these by name.
+Event property definitions. Property groups and events reference these by name.
 
-## User Properties
+Note: User properties (user_id, email, plan, etc.) are defined in User-Properties.md. Property groups can reference properties from either file.
 
-| Property Name | Type | Constraints | Description | Usage |
-|---------------|------|-------------|-------------|-------|
-| user_id | string | regex: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ | Unique identifier for the user. Generated at registration and immutable. | Include in all events where user can be identified. |
-| email | string | regex: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ | User's email address. | Include when email context is relevant. |
-| account_created_at | timestamp | - | Timestamp when the user account was created. | Track account age for cohort analysis. |
-| user_tier | string | enum: free, basic, premium, enterprise | Current subscription tier of the user. | Segment analysis by subscription level. |
-| registration_method | string | enum: email, google, facebook, apple, github | Method used to register an account. | Track registration source for conversion analysis. |
-| referral_code | string | regex: ^[A-Z0-9]{6}$ | Six-character alphanumeric referral code. | Track referral program effectiveness. |
-| account_type | string | enum: personal, team, enterprise | Type of account created. | Segment users by account type. |
-| verification_method | string | enum: link, code | How the user verified their email. | Analyze verification preferences. |
-| time_to_verify | number | - | Seconds between registration and email verification. | Measure verification funnel speed. |
-
-## Event Properties
+## Device Properties
 
 | Property Name | Type | Constraints | Description | Usage |
 |---------------|------|-------------|-------------|-------|
@@ -24,12 +12,27 @@ All property definitions for analytics events. This is the single source of trut
 | platform | string | enum: web, ios, android, windows, macos, linux | Platform or operating system. | Critical for cross-platform analysis. |
 | os_version | string | - | Operating system version string. | Track OS-specific issues and feature adoption. |
 | app_version | string | regex: ^\d+\.\d+\.\d+$ | Application version in semver format. | Track feature rollout and bug reports by version. |
+
+## Session Properties
+
+| Property Name | Type | Constraints | Description | Usage |
+|---------------|------|-------------|-------------|-------|
 | session_id | string | regex: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ | Unique identifier for the user session. | Group events within a single user session. |
 | session_start_time | timestamp | - | Timestamp when the session began. | Calculate session duration and time-based analysis. |
 | session_count | number | - | Total number of sessions for this user. | Track user engagement over time. |
+
+## Page Properties
+
+| Property Name | Type | Constraints | Description | Usage |
+|---------------|------|-------------|-------------|-------|
 | page_url | string | - | Full URL of the current page. | Track page-level engagement and navigation paths. |
 | page_title | string | - | Title of the current page. | Human-readable page identification. |
 | referrer | string | - | URL of the referring page. | Track traffic sources and user journeys. |
+
+## Onboarding Properties
+
+| Property Name | Type | Constraints | Description | Usage |
+|---------------|------|-------------|-------------|-------|
 | onboarding_version | string | - | Version identifier for the onboarding flow. | A/B test different onboarding experiences. |
 | step_name | string | - | Name of the onboarding step completed. | Track onboarding funnel progression. |
 | step_number | number | - | Numeric position of the step in the flow. | Order steps for funnel analysis. |
@@ -37,6 +40,11 @@ All property definitions for analytics events. This is the single source of trut
 | completion_time | number | - | Seconds spent on this step. | Identify slow or confusing steps. |
 | total_steps | number | - | Total number of steps in the onboarding flow. | Calculate completion percentage. |
 | completed_steps | number | - | Number of steps the user completed. | Track partial completions. |
+
+## Project Properties
+
+| Property Name | Type | Constraints | Description | Usage |
+|---------------|------|-------------|-------------|-------|
 | project_id | string | regex: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ | Unique identifier for the project. | Track project-level analytics and cross-reference events. |
 | project_name | string | - | Name of the project. | Human-readable project identification. |
 | project_template | string | enum: blank, starter, advanced, import | Template used to create the project. | Analyze template popularity and user preferences. |

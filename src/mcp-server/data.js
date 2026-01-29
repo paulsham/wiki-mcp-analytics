@@ -101,6 +101,36 @@ export function splitMultiLine(value) {
 }
 
 /**
+ * Look up a property from either propertiesMap or userPropertiesMap
+ * @param {string} propName - Property name to look up
+ * @returns {object|null} Property object or null if not found
+ */
+function lookupProperty(propName) {
+  // Try event properties first, then user properties
+  const eventProp = propertiesMap.get(propName);
+  if (eventProp) {
+    return {
+      name: eventProp.property_name,
+      type: eventProp.type,
+      constraints: eventProp.constraints || null,
+      description: eventProp.description
+    };
+  }
+
+  const userProp = userPropertiesMap.get(propName);
+  if (userProp) {
+    return {
+      name: userProp.property_name,
+      type: userProp.type,
+      constraints: userProp.constraints || null,
+      description: userProp.description
+    };
+  }
+
+  return null;
+}
+
+/**
  * Get expanded properties for an event (resolves property groups)
  * @param {object} event - Event object
  * @returns {object} Expanded properties with property_groups and additional_properties
@@ -117,13 +147,8 @@ export function getExpandedProperties(event) {
     const group = propertyGroupsMap.get(groupName);
     if (group) {
       const groupProps = splitMultiLine(group.properties).map(propName => {
-        const prop = propertiesMap.get(propName);
-        return prop ? {
-          name: prop.property_name,
-          type: prop.type,
-          constraints: prop.constraints || null,
-          description: prop.description
-        } : { name: propName, type: 'unknown', constraints: null, description: 'Property not found' };
+        const prop = lookupProperty(propName);
+        return prop || { name: propName, type: 'unknown', constraints: null, description: 'Property not found' };
       });
 
       result.property_groups.push({
@@ -137,13 +162,8 @@ export function getExpandedProperties(event) {
   // Expand additional properties
   const additionalNames = splitMultiLine(event.additional_properties);
   for (const propName of additionalNames) {
-    const prop = propertiesMap.get(propName);
-    result.additional_properties.push(prop ? {
-      name: prop.property_name,
-      type: prop.type,
-      constraints: prop.constraints || null,
-      description: prop.description
-    } : { name: propName, type: 'unknown', constraints: null, description: 'Property not found' });
+    const prop = lookupProperty(propName);
+    result.additional_properties.push(prop || { name: propName, type: 'unknown', constraints: null, description: 'Property not found' });
   }
 
   return result;

@@ -167,39 +167,83 @@ The Wiki uses markdown pages with tables where each row represents one item.
 
 ### Events.md
 
-| Event Name | Event Table | Event Description | Property Groups | Additional Properties | Notes |
-|------------|-------------|-------------------|-----------------|----------------------|-------|
-| user_registered | Registration | User completed registration | user_context<br>device_info | registration_method<br>referral_code | Fire after successful registration |
+| Event Name | Event Description | Property Groups | Additional Properties | Notes |
+|------------|-------------------|-----------------|----------------------|-------|
+| user_registration_completed | User completed registration | user_context<br>device_info | registration_method<br>referral_code_used | Fire after successful registration |
 
 ### Property-Groups.md
 
 | Group Name | Description | Properties |
 |------------|-------------|------------|
-| user_context | Common user identification properties | user_id<br>email<br>account_created_at |
+| user_context | User identification properties (references User-Properties.md) | user_id<br>email<br>account_type<br>plan |
 
 ### Properties.md
 
+Event-specific properties. Property groups can also reference User-Properties.md.
+
 | Property Name | Type | Constraints | Description | Usage |
 |---------------|------|-------------|-------------|-------|
-| user_id | string | regex: ^[0-9a-f-]{36}$ | Unique user identifier | Include in all authenticated events |
+| device_type | string | enum: mobile, tablet, desktop | Type of device | Include in device_info group |
 
 ### User-Properties.md
 
-User properties are custom properties set on user profiles via `identify()` or `setUserProperties()`. They persist across sessions and are used for segmentation (similar to PostHog person properties or Amplitude user properties).
+User properties are set on user profiles via `identify()` or `setUserProperties()`. They persist across sessions and are used for segmentation (similar to PostHog person properties or Amplitude user properties).
 
 | Property Name | Type | Constraints | Set Once | Description |
 |---------------|------|-------------|----------|-------------|
+| user_id | string | regex: ^[0-9a-f-]{36}$ | yes | Unique identifier for the user. Used for identify() calls. |
 | plan | string | enum: free, pro, enterprise | no | Current subscription tier. Segmentation by plan. |
 | signup_source | string | enum: organic, referral, paid | yes | How user discovered the product. Attribution analysis. |
 
 - **Set Once: yes** - Property should only be set once (use `set_once` operation)
 - **Set Once: no** - Property can be updated (use `set` operation)
 
+### Choosing an Approach
+
+This template supports two analytics architectures:
+
+**User-Centric Platforms (PostHog, Amplitude, Mixpanel, Segment)**
+
+User identity is handled separately from events. The platform automatically associates events with user profiles.
+
+```javascript
+// Identify user once - properties persist on profile
+analytics.identify(userId, { plan: 'pro', signup_source: 'referral' });
+
+// Track events - only event-specific properties needed
+analytics.track('project_created', { project_id: '123', project_template: 'starter' });
+```
+
+For this approach:
+- Define user traits in **User-Properties.md** (user_id, email, plan, etc.)
+- Events reference only **device/session context** and **event-specific properties**
+- No need for a `user_context` property group - the platform handles identity
+
+**Self-Contained Events (Data Warehouse, BigQuery, Snowflake)**
+
+Each event includes full context for independent queryability. No persistent "user profile" - events are self-contained rows.
+
+```javascript
+// Each event includes all context
+analytics.track('project_created', {
+  user_id: 'abc-123',
+  email: 'user@example.com',
+  plan: 'pro',
+  project_id: '123',
+  project_template: 'starter'
+});
+```
+
+For this approach:
+- Define user properties in **User-Properties.md** (same as above)
+- Create a `user_context` **property group** that references user properties
+- Include `user_context` group in events that need user context
+
 **Key conventions:**
 - Use `<br>` for line breaks in multi-value cells
-- Event properties must be defined in Properties.md
-- User properties are defined separately in User-Properties.md
-- Events and property groups reference properties by name only
+- Event properties are defined in Properties.md
+- User properties are defined in User-Properties.md
+- Property groups can reference properties from either file
 
 ## Project Structure
 
