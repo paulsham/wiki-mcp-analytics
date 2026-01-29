@@ -11,12 +11,15 @@ import {
   PROPERTIES_MD,
   PROPERTY_GROUPS_MD,
   EVENTS_MD,
+  USER_PROPERTIES_MD,
   PROPERTIES_CSV,
   PROPERTY_GROUPS_CSV,
   EVENTS_CSV,
+  USER_PROPERTIES_CSV,
   PROPERTIES_COLUMNS,
   PROPERTY_GROUPS_COLUMNS,
-  EVENTS_COLUMNS
+  EVENTS_COLUMNS,
+  USER_PROPERTIES_COLUMNS
 } from '../constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -149,6 +152,15 @@ function parsePropertyGroupsFile(content) {
 }
 
 /**
+ * Parse User-Properties.md file - extracts user properties from all sections
+ * @param {string} content - The markdown file content
+ * @returns {Object[]} Array of user property objects
+ */
+function parseUserPropertiesFile(content) {
+  return parseMultiTableFile(content);
+}
+
+/**
  * Escape a value for CSV output
  * @param {string} value - The value to escape
  * @returns {string} CSV-safe value
@@ -213,6 +225,17 @@ export function transformWikiToCSV(wikiDir = WIKI_DIR, outputDir = OUTPUT_DIR) {
   const events = parseEventsFile(eventsContent);
   console.log(`Parsed ${events.length} events`);
 
+  // Read and parse User-Properties.md (optional - may not exist in older wikis)
+  const userPropertiesPath = join(wikiDir, USER_PROPERTIES_MD);
+  let userProperties = [];
+  if (existsSync(userPropertiesPath)) {
+    const userPropertiesContent = readFileSync(userPropertiesPath, 'utf-8');
+    userProperties = parseUserPropertiesFile(userPropertiesContent);
+    console.log(`Parsed ${userProperties.length} user properties`);
+  } else {
+    console.log(`No ${USER_PROPERTIES_MD} found, skipping user properties`);
+  }
+
   // Write properties.csv
   const propertiesCSV = toCSV(properties, PROPERTIES_COLUMNS);
   const propertiesOutPath = join(outputDir, PROPERTIES_CSV);
@@ -231,10 +254,19 @@ export function transformWikiToCSV(wikiDir = WIKI_DIR, outputDir = OUTPUT_DIR) {
   writeFileSync(eventsOutPath, eventsCSV);
   console.log(`Written: ${eventsOutPath}`);
 
+  // Write user-properties.csv (if user properties exist)
+  if (userProperties.length > 0) {
+    const userPropertiesCSV = toCSV(userProperties, USER_PROPERTIES_COLUMNS);
+    const userPropertiesOutPath = join(outputDir, USER_PROPERTIES_CSV);
+    writeFileSync(userPropertiesOutPath, userPropertiesCSV);
+    console.log(`Written: ${userPropertiesOutPath}`);
+  }
+
   return {
     properties,
     propertyGroups,
-    events
+    events,
+    userProperties
   };
 }
 

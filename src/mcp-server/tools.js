@@ -7,6 +7,8 @@ import {
   eventsMap,
   propertiesMap,
   propertyGroups,
+  userProperties,
+  userPropertiesMap,
   splitMultiLine,
   getExpandedProperties,
 } from './data.js';
@@ -301,6 +303,181 @@ export const tools = {
         event: args.event_name,
         table: event.event_table,
         related_events: relatedEvents
+      };
+    }
+  },
+
+  get_user_property_details: {
+    description: 'Get user property definition. User properties are custom properties set on user profiles via identify() or setUserProperties().',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        property_name: {
+          type: 'string',
+          description: 'Name of the user property to retrieve'
+        }
+      },
+      required: ['property_name']
+    },
+    handler: async (args) => {
+      const prop = userPropertiesMap.get(args.property_name);
+      if (!prop) {
+        throw new NotFoundError('User property', args.property_name);
+      }
+
+      return {
+        name: prop.property_name,
+        type: prop.type,
+        constraints: prop.constraints || null,
+        set_once: prop.set_once?.toLowerCase() === 'yes',
+        description: prop.description
+      };
+    }
+  },
+
+  search_user_properties: {
+    description: 'Search for user properties by name, description, or filter by set_once behavior.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Search term for property name or description'
+        },
+        set_once: {
+          type: 'boolean',
+          description: 'Set to true to show only set_once properties. False or omit to show all.'
+        }
+      }
+    },
+    handler: async (args) => {
+      let results = [...userProperties];
+
+      // Filter by query
+      if (args.query) {
+        const query = args.query.toLowerCase();
+        results = results.filter(p =>
+          p.property_name.toLowerCase().includes(query) ||
+          p.description.toLowerCase().includes(query)
+        );
+      }
+
+      // Filter by set_once (only when true)
+      if (args.set_once === true) {
+        results = results.filter(p => p.set_once?.toLowerCase() === 'yes');
+      }
+
+      return results.map(p => ({
+        name: p.property_name,
+        type: p.type,
+        constraints: p.constraints || null,
+        set_once: p.set_once?.toLowerCase() === 'yes',
+        description: p.description
+      }));
+    }
+  },
+
+  validate_user_properties: {
+    description: 'Validate user properties payload against the spec. Checks property names, types, constraints, and warns if set_once properties are used with the wrong operation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        operation: {
+          type: 'string',
+          enum: ['set', 'set_once'],
+          description: 'The operation being used (set or set_once)'
+        },
+        payload: {
+          type: 'object',
+          description: 'The user properties payload to validate'
+        }
+      },
+      required: ['operation', 'payload']
+    },
+    handler: async (args) => {
+      const errors = [];
+      const warnings = [];
+      const validFields = [];
+
+      for (const [key, value] of Object.entries(args.payload)) {
+        const prop = userPropertiesMap.get(key);
+
+        if (!prop) {
+          warnings.push({ field: key, issue: 'Unknown user property not in spec' });
+          continue;
+        }
+
+        // Check operation vs set_once mismatch
+        const isSetOnce = prop.set_once?.toLowerCase() === 'yes';
+        if (isSetOnce && args.operation === 'set') {
+          warnings.push({
+            field: key,
+            issue: 'Property is set_once but using set operation',
+            suggestion: 'Use set_once operation to ensure value is only set if not already set'
+          });
+        }
+        if (!isSetOnce && args.operation === 'set_once') {
+          warnings.push({
+            field: key,
+            issue: 'Property is not set_once but using set_once operation',
+            suggestion: 'Use set operation for properties that can be updated'
+          });
+        }
+
+        // Type validation
+        const actualType = Array.isArray(value) ? 'array' : typeof value;
+        const expectedType = prop.type === 'timestamp' ? 'string' : prop.type;
+
+        if (expectedType !== actualType && expectedType !== 'unknown') {
+          errors.push({
+            field: key,
+            issue: 'Type mismatch',
+            expected: prop.type,
+            got: actualType
+          });
+          continue;
+        }
+
+        // Constraint validation
+        if (prop.constraints && prop.constraints !== '-') {
+          if (prop.constraints.startsWith('enum:')) {
+            const allowedValues = prop.constraints.substring(5).split(',').map(s => s.trim());
+            if (!allowedValues.includes(value)) {
+              errors.push({
+                field: key,
+                issue: 'Invalid enum value',
+                expected: allowedValues,
+                got: value
+              });
+              continue;
+            }
+          } else if (prop.constraints.startsWith('regex:')) {
+            const pattern = prop.constraints.substring(6).trim();
+            try {
+              const regex = new RegExp(pattern);
+              if (!regex.test(value)) {
+                errors.push({
+                  field: key,
+                  issue: 'Regex validation failed',
+                  expected: pattern,
+                  got: value
+                });
+                continue;
+              }
+            } catch (e) {
+              // Invalid regex pattern in spec
+            }
+          }
+        }
+
+        validFields.push(key);
+      }
+
+      return {
+        valid: errors.length === 0,
+        errors,
+        warnings,
+        valid_fields: validFields
       };
     }
   }

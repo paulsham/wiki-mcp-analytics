@@ -68,12 +68,18 @@ export function runPipeline(options = {}) {
     console.log(`  Properties: ${results.csv.properties.length}`);
     console.log(`  Property Groups: ${results.csv.propertyGroups.length}`);
     console.log(`  Events: ${results.csv.events.length}`);
+    if (results.csv.userProperties?.length > 0) {
+      console.log(`  User Properties: ${results.csv.userProperties.length}`);
+    }
   }
 
   if (results.js) {
     console.log(`  Generated JS files for ${results.js.properties} properties`);
     console.log(`  Generated JS files for ${results.js.groups} property groups`);
     console.log(`  Generated JS files for ${results.js.events} events in ${results.js.tables} tables`);
+    if (results.js.userProperties > 0) {
+      console.log(`  Generated JS files for ${results.js.userProperties} user properties`);
+    }
   }
 
   return results;

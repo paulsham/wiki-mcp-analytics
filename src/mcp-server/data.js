@@ -11,15 +11,18 @@ import {
   PROPERTIES_CSV,
   PROPERTY_GROUPS_CSV,
   EVENTS_CSV,
+  USER_PROPERTIES_CSV,
 } from '../constants.js';
 
 // Data storage
 export let properties = [];
 export let propertyGroups = [];
 export let events = [];
+export let userProperties = [];
 export let propertiesMap = new Map();
 export let propertyGroupsMap = new Map();
 export let eventsMap = new Map();
+export let userPropertiesMap = new Map();
 
 /**
  * Load and parse CSV files
@@ -49,7 +52,18 @@ export function loadData(specsDir) {
   events = parse(eventsContent, { columns: true, skip_empty_lines: true });
   eventsMap = new Map(events.map(e => [e.event_name, e]));
 
-  console.error(`Loaded: ${properties.length} properties, ${propertyGroups.length} property groups, ${events.length} events`);
+  // Parse user properties (optional - may not exist)
+  const userPropertiesPath = join(specsDir, USER_PROPERTIES_CSV);
+  if (existsSync(userPropertiesPath)) {
+    const userPropertiesContent = readFileSync(userPropertiesPath, 'utf-8');
+    userProperties = parse(userPropertiesContent, { columns: true, skip_empty_lines: true });
+    userPropertiesMap = new Map(userProperties.map(p => [p.property_name, p]));
+    console.error(`Loaded: ${properties.length} properties, ${propertyGroups.length} property groups, ${events.length} events, ${userProperties.length} user properties`);
+  } else {
+    userProperties = [];
+    userPropertiesMap = new Map();
+    console.error(`Loaded: ${properties.length} properties, ${propertyGroups.length} property groups, ${events.length} events`);
+  }
 }
 
 /**

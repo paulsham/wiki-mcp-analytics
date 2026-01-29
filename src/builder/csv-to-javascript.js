@@ -12,9 +12,11 @@ import {
   PROPERTIES_CSV,
   PROPERTY_GROUPS_CSV,
   EVENTS_CSV,
+  USER_PROPERTIES_CSV,
   PROPERTIES_DIR,
   PROPERTY_GROUPS_DIR,
-  EVENTS_DIR
+  EVENTS_DIR,
+  USER_PROPERTIES_DIR
 } from '../constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -101,6 +103,42 @@ export const ${identifier} = {
   constraints: ${property.constraints && property.constraints !== '-' ? `'${property.constraints.replace(/'/g, "\\'")}'` : 'null'},
   description: '${property.description.replace(/'/g, "\\'")}',
   usage: '${(property.usage || '').replace(/'/g, "\\'")}'
+};
+
+export default ${identifier};
+`;
+}
+
+/**
+ * Generate a user property JavaScript file
+ * @param {Object} userProperty - User property object
+ * @returns {string} JavaScript file content
+ */
+function generateUserPropertyFile(userProperty) {
+  const identifier = toIdentifier(userProperty.property_name);
+  const setOnce = userProperty.set_once?.toLowerCase() === 'yes';
+
+  return `/**
+ * @typedef {Object} UserProperty
+ * @property {string} name
+ * @property {string} type
+ * @property {string} [constraints]
+ * @property {boolean} set_once
+ * @property {string} description
+ */
+
+/**
+ * ${userProperty.property_name} user property definition
+ * ${userProperty.description}
+ *
+ * @type {UserProperty}
+ */
+export const ${identifier} = {
+  name: '${userProperty.property_name}',
+  type: '${userProperty.type}',
+  constraints: ${userProperty.constraints && userProperty.constraints !== '-' ? `'${userProperty.constraints.replace(/'/g, "\\'")}'` : 'null'},
+  set_once: ${setOnce},
+  description: '${userProperty.description.replace(/'/g, "\\'")}'
 };
 
 export default ${identifier};
@@ -350,11 +388,43 @@ export function transformCSVToJavaScript(inputDir = INPUT_DIR, outputDir = OUTPU
   );
   console.log(`Generated ${events.length} event files in ${Object.keys(eventsByTable).length} tables`);
 
+  // Process user properties (optional - may not exist)
+  const userPropertiesPath = join(inputDir, USER_PROPERTIES_CSV);
+  let userPropertiesCount = 0;
+
+  if (existsSync(userPropertiesPath)) {
+    const userPropertiesOutDir = join(outputDir, USER_PROPERTIES_DIR);
+
+    if (existsSync(userPropertiesOutDir)) {
+      rmSync(userPropertiesOutDir, { recursive: true });
+    }
+    mkdirSync(userPropertiesOutDir, { recursive: true });
+
+    const userProperties = parseCSV(userPropertiesPath);
+    const userPropertyNames = [];
+
+    for (const userProperty of userProperties) {
+      const fileName = `${userProperty.property_name}.js`;
+      const content = generateUserPropertyFile(userProperty);
+      writeFileSync(join(userPropertiesOutDir, fileName), content);
+      userPropertyNames.push(userProperty.property_name);
+    }
+
+    // Write user properties index
+    writeFileSync(
+      join(userPropertiesOutDir, 'index.js'),
+      generateIndexFile(userPropertyNames, 'User Properties')
+    );
+    console.log(`Generated ${userProperties.length} user property files`);
+    userPropertiesCount = userProperties.length;
+  }
+
   return {
     properties: properties.length,
     groups: groups.length,
     events: events.length,
-    tables: Object.keys(eventsByTable).length
+    tables: Object.keys(eventsByTable).length,
+    userProperties: userPropertiesCount
   };
 }
 

@@ -21,9 +21,11 @@ import {
   properties,
   propertyGroups,
   events,
+  userProperties,
   propertiesMap,
   propertyGroupsMap,
   eventsMap,
+  userPropertiesMap,
   splitMultiLine,
   getExpandedProperties,
 } from './data.js';
@@ -133,6 +135,12 @@ function registerResources(server) {
         name: p.property_name,
         description: p.description,
         mimeType: 'application/json'
+      })),
+      ...userProperties.map(p => ({
+        uri: `analytics://user-properties/${p.property_name}`,
+        name: p.property_name,
+        description: p.description,
+        mimeType: 'application/json'
       }))
     ];
 
@@ -165,6 +173,13 @@ function registerResources(server) {
           property_groups: splitMultiLine(e.property_groups),
           additional_properties: splitMultiLine(e.additional_properties),
           notes: e.notes
+        })),
+        user_properties: userProperties.map(p => ({
+          name: p.property_name,
+          type: p.type,
+          constraints: p.constraints,
+          set_once: p.set_once?.toLowerCase() === 'yes',
+          description: p.description
         }))
       };
     } else if (uri.startsWith('analytics://events/')) {
@@ -210,6 +225,18 @@ function registerResources(server) {
         constraints: prop.constraints,
         description: prop.description,
         usage: prop.usage
+      };
+    } else if (uri.startsWith('analytics://user-properties/')) {
+      const propName = uri.replace('analytics://user-properties/', '');
+      const prop = userPropertiesMap.get(propName);
+      if (!prop) throw new Error(`User property not found: ${propName}`);
+
+      content = {
+        name: prop.property_name,
+        type: prop.type,
+        constraints: prop.constraints,
+        set_once: prop.set_once?.toLowerCase() === 'yes',
+        description: prop.description
       };
     } else {
       throw new Error(`Unknown resource URI: ${uri}`);
